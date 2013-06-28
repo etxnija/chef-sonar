@@ -20,16 +20,36 @@
 include_recipe "java"
 
 package "unzip"
+sonar_distribution = "sonar-#{node['sonar']['version']}"
 
-remote_file "/opt/sonar-#{node['sonar']['version']}.zip" do
-  source "#{node['sonar']['mirror']}/sonar-#{node['sonar']['version']}.zip"
+local_sonar_dir = "/opt/#{sonar_distribution}"
+
+sonar_file = "#{sonar_distribution}.zip"
+
+dist_file_location = "#{node['sonar']['mirror']}/#{sonar_file}"
+
+# Get the zip file
+remote_file "/opt/#{sonar_file}" do
+  source "#{dist_file_location}"
   mode "0644"
-  checksum "#{node['sonar']['checksum']}"
-  not_if { ::File.exists?("/opt/sonar-#{node['sonar']['version']}.zip") }
+  not_if { ::File.exists?("#{local_sonar_dir}/#{sonar_file}")}
 end
 
-execute "unzip /opt/sonar-#{node['sonar']['version']}.zip -d /opt/" do
-  not_if { ::File.directory?("/opt/sonar-#{node['sonar']['version']}/") }
+# Expand the zip
+execute "unzip /opt/#{sonar_file} -d /opt/" do
+  not_if { ::File.directory? ("/opt/#{sonar_distribution}")}  
+end
+
+
+#Get the plugins for .Net
+#http://search.maven.org/remotecontent?filepath=org/codehaus/sonar-plugins/dotnet/distribution/2.1/distribution-2.1.zip
+remote_file "/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip" do
+  source "http://search.maven.org/remotecontent?filepath=org/codehaus/sonar-plugins/dotnet/distribution/2.1/distribution-2.1.zip"
+  mode "0644"
+end
+
+# Expand the zip
+execute "unzip -j /opt/#{sonar_distribution}/extensions/plugins/dotnet.zip -d /opt/#{sonar_distribution}/extensions/plugins/" do
 end
 
 link "/opt/sonar" do
@@ -53,14 +73,5 @@ template "sonar.properties" do
   variables(
     :options => node['sonar']['options']
   )
-  notifies :restart, resources(:service => "sonar")
-end
-
-template "wrapper.conf" do
-  path "/opt/sonar/conf/wrapper.conf"
-  source "wrapper.conf.erb"
-  owner "root"
-  group "root"
-  mode 0644
   notifies :restart, resources(:service => "sonar")
 end
