@@ -46,10 +46,12 @@ end
 remote_file "/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip" do
   source "http://search.maven.org/remotecontent?filepath=org/codehaus/sonar-plugins/dotnet/distribution/2.1/distribution-2.1.zip"
   mode "0644"
+  not_if { ::File.exists?("/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip")}
 end
 
 # Expand the zip
 execute "unzip -j /opt/#{sonar_distribution}/extensions/plugins/dotnet.zip -d /opt/#{sonar_distribution}/extensions/plugins/" do
+  not_if { ::File.exists?("/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip")}
 end
 
 link "/opt/sonar" do
