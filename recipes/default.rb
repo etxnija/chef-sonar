@@ -40,18 +40,18 @@ execute "unzip /opt/#{sonar_file} -d /opt/" do
   not_if { ::File.directory? ("/opt/#{sonar_distribution}")}  
 end
 
-
+node['sonar'['plugins']].each_pair do |plugin , source|
 #Get the plugins for .Net
 #http://search.maven.org/remotecontent?filepath=org/codehaus/sonar-plugins/dotnet/distribution/2.1/distribution-2.1.zip
-remote_file "/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip" do
-  source "http://search.maven.org/remotecontent?filepath=org/codehaus/sonar-plugins/dotnet/distribution/2.1/distribution-2.1.zip"
-  mode "0644"
-  not_if { ::File.exists?("/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip")}
-end
-
-# Expand the zip
-execute "unzip -j /opt/#{sonar_distribution}/extensions/plugins/dotnet.zip -d /opt/#{sonar_distribution}/extensions/plugins/" do
-  not_if { ::File.exists?("/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip")}
+  remote_file "/opt/#{sonar_distribution}/extensions/plugins/#{plugin}.zip" do
+    source "#{source}"
+    mode "0644"
+    not_if { ::File.exists?("/opt/#{sonar_distribution}/extensions/plugins/#{plugin}.zip")}
+  end
+  # Expand the zip
+  execute "unzip -j /opt/#{sonar_distribution}/extensions/plugins/dotnet.zip -d /opt/#{sonar_distribution}/extensions/plugins/" do
+    not_if { ::File.exists?("/opt/#{sonar_distribution}/extensions/plugins/dotnet.zip")}
+  end
 end
 
 link "/opt/sonar" do
